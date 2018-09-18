@@ -1,0 +1,45 @@
+service:
+  name: decoder
+
+plugins:
+  - serverless-plugin-typescript
+
+custom:
+  stage: ${opt:stage, "dev"}
+  prefix: decoder-${self:custom.stage}
+  bucketName: ${self:custom.prefix}-abis
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  environment:
+    BUCKET_NAME: ${self:custom.bucketName}
+    LOG_LEVEL: ${opt:logLevel, "debug"}
+    ETHERSCAN_API_KEY: ${opt:etherscanApiKey, "TestApiKey"}
+    ETHERSCAN_API_URL: ${opt:etherscanApiUrl, "https://api.etherscan.io/api"}
+
+  iamRoleStatements:
+  - Effect: "Allow"
+    Action:
+    - "s3:ListBucket"
+    Resource: "arn:aws:s3:::${self:custom.bucketName}"
+  - Effect: "Allow"
+    Action:
+    - "s3:GetObject"
+    - "s3:PutObject"
+    Resource: "arn:aws:s3:::${self:custom.bucketName}/*"
+
+functions:
+  decode-logs:
+    handler: src/decode-logs.handle
+    events:
+      - http:
+          method: post
+          path: /decode-logs
+
+resources:
+  Resources:
+    AbiBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
