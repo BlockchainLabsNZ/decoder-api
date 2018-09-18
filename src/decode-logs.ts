@@ -3,7 +3,7 @@ import { APIGatewayEvent, Callback, Context, Handler } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
 import * as Logger from 'bunyan';
 import { JoiLog, Log } from '@ethercast/model';
-import * as Joi from 'joi';
+import Joi from 'joi';
 import Decoder, { DecoderOptions } from './decoder';
 
 const client = new EtherscanClient({
