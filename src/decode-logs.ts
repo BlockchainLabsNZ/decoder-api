@@ -56,9 +56,7 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
     return;
   }
 
-  // const { value, error } = JoiDecodeLogsRequestBody.validate<DecodeLogsRequestBody>(body);
-  const error: any = null;
-  const value = body as DecodeLogsRequestBody;
+  const { value, error } = JoiDecodeLogsRequestBody.validate<DecodeLogsRequestBody>(body);
 
   if (error !== null) {
     logger.debug({ error, body }, 'invalid request body');
