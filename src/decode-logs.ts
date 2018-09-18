@@ -2,8 +2,7 @@ import EtherscanClient from '@ethercast/etherscan-client';
 import { APIGatewayEvent, Callback, Context, Handler } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
 import * as Logger from 'bunyan';
-import { JoiLog, Log } from '@ethercast/model';
-import Joi from 'joi';
+import { Log } from '@ethercast/model';
 import Decoder, { DecoderOptions } from './decoder';
 
 const client = new EtherscanClient({
@@ -23,10 +22,6 @@ const logger = Logger.createLogger({
   name: 'decode-log',
   serializers: Logger.stdSerializers,
   level: process.env.LOG_LEVEL as Logger.LogLevel
-});
-
-const JoiDecodeLogsRequestBody = Joi.object({
-  logs: Joi.array().items(JoiLog).min(1).max(100).required()
 });
 
 interface DecodeLogsRequestBody {
@@ -56,21 +51,26 @@ export const handle: Handler = async (event: APIGatewayEvent, context: Context, 
     return;
   }
 
-  const { value, error } = JoiDecodeLogsRequestBody.validate<DecodeLogsRequestBody>(body);
-
-  if (error !== null) {
-    logger.debug({ error, body }, 'invalid request body');
+  if (
+    typeof body !== 'object' ||
+    Array.isArray(body) ||
+    !Array.isArray(body.logs) ||
+    body.logs.length < 1 ||
+    body.logs.length > 100
+  ) {
+    logger.debug({ body }, 'invalid request body');
 
     cb(null, {
       statusCode: 422,
       body: JSON.stringify({
-        message: 'validation error on the request body',
-        error
+        message: 'validation error on the request body - should be object with array of logs'
       })
     });
 
     return;
   }
+
+  const value = body as DecodeLogsRequestBody;
 
   try {
     const decodedLogs = await Promise.all(
